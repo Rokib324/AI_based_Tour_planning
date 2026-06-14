@@ -1,0 +1,796 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TravelAI – Smart Journey Planner | AI-Powered Travel Planning</title>
+  <meta name="description" content="Get personalized travel recommendations, smart budget optimization and complete travel management in one place with TravelAI Smart Journey Planner." />
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:      #0a0e2a;
+      --navy-mid:  #111433;
+      --blue:      #1a3dc4;
+      --blue-light:#2563eb;
+      --purple:    #7c3aed;
+      --violet:    #a855f7;
+      --green:     #16a34a;
+      --green-d:   #15803d;
+      --gold:      #f59e0b;
+      --white:     #ffffff;
+      --text-muted:#94a3b8;
+      --card-bg:   rgba(255,255,255,0.04);
+      --border:    rgba(255,255,255,0.08);
+    }
+
+    html { scroll-behavior: smooth; }
+    body  { font-family: 'Inter', sans-serif; background: var(--navy); color: var(--white); overflow-x: hidden; }
+
+    /* ── NAVBAR ────────────────────────────────────── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 40px; height: 68px;
+      background: rgba(10,14,42,0.82);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .nav-logo .logo-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      display: grid; place-items: center; font-size: 20px;
+    }
+    .nav-logo .logo-text { display: flex; flex-direction: column; line-height: 1.1; }
+    .nav-logo .brand    { font-weight: 800; font-size: 17px; color: var(--white); }
+    .nav-logo .tagline  { font-size: 10px; color: var(--text-muted); font-weight: 400; }
+    .nav-links { display: flex; gap: 28px; list-style: none; }
+    .nav-links a {
+      text-decoration: none; font-size: 14px; font-weight: 500; color: #cbd5e1;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--white); }
+    .btn-login {
+      padding: 9px 20px; background: linear-gradient(135deg, #2563eb, #7c3aed);
+      color: var(--white); border: none; border-radius: 8px; font-weight: 600;
+      font-size: 14px; cursor: pointer; text-decoration: none;
+      display: flex; align-items: center; gap: 6px;
+      transition: opacity .2s, transform .15s;
+    }
+    .btn-login:hover { opacity: .88; transform: translateY(-1px); }
+
+    /* ── HERO ──────────────────────────────────────── */
+    #hero {
+      position: relative; min-height: 100vh;
+      display: flex; flex-direction: column; justify-content: center;
+      padding: 100px 60px 60px;
+      overflow: hidden;
+    }
+    .hero-bg {
+      position: absolute; inset: 0; z-index: 0;
+      background: url("{% static 'images/hero_bg.png' %}") center/cover no-repeat;
+    }
+    .hero-overlay {
+      position: absolute; inset: 0; z-index: 1;
+      background: linear-gradient(
+        100deg,
+        rgba(10,14,42,0.92) 0%,
+        rgba(10,14,42,0.70) 55%,
+        rgba(10,14,42,0.25) 100%
+      );
+    }
+    .hero-content { position: relative; z-index: 2; max-width: 600px; }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(37,99,235,0.18); border: 1px solid rgba(37,99,235,0.4);
+      color: #93c5fd; padding: 5px 14px; border-radius: 20px; font-size: 12px;
+      font-weight: 600; letter-spacing: .5px; text-transform: uppercase; margin-bottom: 20px;
+    }
+    .hero-badge span { font-size: 16px; }
+
+    .hero-h1 { font-size: clamp(38px,5vw,62px); font-weight: 900; line-height: 1.08; margin-bottom: 6px; }
+    .hero-h1 .gradient-text {
+      background: linear-gradient(90deg, #60a5fa, #a78bfa, #f472b6);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-sub {
+      font-size: 17px; font-weight: 600; color: #93c5fd;
+      display: flex; align-items: center; gap: 6px; margin-bottom: 16px;
+    }
+    .hero-sub .ai-dot {
+      width: 8px; height: 8px; border-radius: 50%; background: #34d399;
+      box-shadow: 0 0 8px #34d399; animation: pulse 1.8s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    .hero-p { font-size: 15px; color: #94a3b8; line-height: 1.7; max-width: 440px; margin-bottom: 36px; }
+
+    /* Search Bar */
+    .search-bar {
+      background: rgba(255,255,255,0.95);
+      border-radius: 16px; padding: 18px 20px;
+      display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      max-width: 780px;
+    }
+    .search-field { flex: 1; min-width: 140px; display: flex; flex-direction: column; gap: 4px; }
+    .search-field label { font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .5px; }
+    .search-field input, .search-field select {
+      border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 9px 12px;
+      font-size: 14px; color: #1e293b; background: #fff; outline: none;
+      font-family: 'Inter', sans-serif;
+      transition: border-color .2s;
+    }
+    .search-field input:focus, .search-field select:focus { border-color: #2563eb; }
+    .search-field input::placeholder { color: #94a3b8; }
+    .search-actions { display: flex; gap: 10px; align-self: flex-end; }
+    .btn-primary {
+      padding: 11px 22px; background: linear-gradient(135deg, #2563eb, #7c3aed);
+      color: #fff; border: none; border-radius: 10px; font-weight: 700; font-size: 14px;
+      cursor: pointer; white-space: nowrap;
+      transition: transform .15s, box-shadow .2s;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(37,99,235,.4); }
+    .btn-outline {
+      padding: 11px 20px; background: transparent;
+      border: 2px solid #2563eb; color: #2563eb; border-radius: 10px;
+      font-weight: 700; font-size: 14px; cursor: pointer; white-space: nowrap;
+      transition: background .2s, color .2s;
+    }
+    .btn-outline:hover { background: #2563eb; color: #fff; }
+
+    /* Stats floating */
+    .hero-stats {
+      position: absolute; right: 60px; top: 50%; transform: translateY(-50%);
+      z-index: 2; display: flex; flex-direction: column; gap: 16px;
+    }
+    .stat-card {
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 16px; padding: 16px 20px;
+      display: flex; align-items: center; gap: 14px;
+      min-width: 190px;
+      animation: floatUp 3s ease-in-out infinite alternate;
+    }
+    .stat-card:nth-child(2) { animation-delay: 1s; }
+    .stat-card:nth-child(3) { animation-delay: 2s; }
+    @keyframes floatUp { from{transform:translateY(0)} to{transform:translateY(-8px)} }
+    .stat-icon { font-size: 28px; }
+    .stat-num  { font-size: 22px; font-weight: 800; }
+    .stat-lbl  { font-size: 11px; color: var(--text-muted); }
+
+    /* ── SECTION COMMON ────────────────────────────── */
+    section { padding: 80px 60px; }
+    .section-header {
+      text-align: center; margin-bottom: 50px;
+    }
+    .section-header h2 {
+      font-size: 28px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
+      display: flex; align-items: center; justify-content: center; gap: 14px;
+    }
+    .section-header h2::before,
+    .section-header h2::after {
+      content: ''; flex: 1; max-width: 80px; height: 2px;
+      background: linear-gradient(90deg, transparent, #2563eb);
+    }
+    .section-header h2::after { background: linear-gradient(90deg, #2563eb, transparent); }
+    .section-header p { color: var(--text-muted); font-size: 15px; margin-top: 8px; }
+
+    /* ── EXPERIENCE CARDS ──────────────────────────── */
+    #experience { background: #f8fafc; }
+    .experience-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 960px; margin: 0 auto;
+    }
+    .exp-card {
+      border-radius: 20px; padding: 32px 28px;
+      display: flex; flex-direction: column; gap: 14px;
+      position: relative; overflow: hidden;
+      transition: transform .25s, box-shadow .25s;
+    }
+    .exp-card:hover { transform: translateY(-6px); box-shadow: 0 20px 50px rgba(0,0,0,.18); }
+    .exp-card.green { background: linear-gradient(135deg, #15803d, #16a34a); color: #fff; }
+    .exp-card.blue  { background: linear-gradient(135deg, #1e40af, #2563eb); color: #fff; }
+    .exp-icon {
+      width: 56px; height: 56px; border-radius: 14px;
+      background: rgba(255,255,255,0.18);
+      display: grid; place-items: center; font-size: 26px;
+    }
+    .exp-card h3 { font-size: 22px; font-weight: 800; }
+    .exp-card p  { font-size: 14px; opacity: .85; line-height: 1.6; }
+    .exp-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      border: 2px solid rgba(255,255,255,0.7); color: #fff;
+      background: transparent; border-radius: 10px;
+      padding: 10px 20px; font-weight: 700; font-size: 14px; cursor: pointer;
+      text-decoration: none; width: fit-content;
+      transition: background .2s;
+    }
+    .exp-btn:hover { background: rgba(255,255,255,0.15); }
+
+    /* ── FEATURES ──────────────────────────────────── */
+    #features { background: var(--navy-mid); }
+    .features-grid {
+      display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;
+    }
+    .feature-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px; padding: 28px 22px;
+      text-align: center; width: 165px;
+      transition: transform .2s, border-color .2s;
+    }
+    .feature-card:hover { transform: translateY(-5px); border-color: #2563eb; }
+    .feature-icon { font-size: 36px; margin-bottom: 12px; }
+    .feature-card h4 { font-size: 13px; font-weight: 700; color: #e2e8f0; line-height: 1.4; }
+
+    /* ── PACKAGES ──────────────────────────────────── */
+    #packages { background: var(--navy); }
+    .packages-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px; max-width: 1100px; margin: 0 auto;
+    }
+    .pkg-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px; overflow: hidden;
+      transition: transform .25s, box-shadow .25s;
+      position: relative;
+    }
+    .pkg-card:hover { transform: translateY(-6px); box-shadow: 0 20px 50px rgba(37,99,235,.2); }
+    .pkg-img {
+      height: 130px; background: #1e293b;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 50px; position: relative; overflow: hidden;
+    }
+    .pkg-img img { width:100%; height:100%; object-fit:cover; }
+    .pkg-badge {
+      position: absolute; top: 10px; left: 10px;
+      background: #dc2626; color: #fff; padding: 3px 8px;
+      border-radius: 6px; font-size: 11px; font-weight: 700;
+    }
+    .pkg-badge.popular { background: #7c3aed; }
+    .pkg-body { padding: 14px; }
+    .pkg-location { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
+    .pkg-name    { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+    .pkg-dur     { font-size: 11px; color: var(--text-muted); margin-bottom: 10px; }
+    .pkg-pricing { display: flex; align-items: baseline; gap: 6px; margin-bottom: 12px; }
+    .pkg-price   { font-size: 18px; font-weight: 800; color: #34d399; }
+    .pkg-old     { font-size: 13px; color: var(--text-muted); text-decoration: line-through; }
+    .btn-view {
+      width: 100%; padding: 9px; background: linear-gradient(135deg, #16a34a, #15803d);
+      color: #fff; border: none; border-radius: 8px; font-weight: 700; font-size: 13px;
+      cursor: pointer; transition: opacity .2s;
+    }
+    .btn-view:hover { opacity: .85; }
+
+    /* ── HOW IT WORKS ──────────────────────────────── */
+    #how { background: var(--navy-mid); }
+    .steps {
+      display: flex; align-items: flex-start; justify-content: center;
+      gap: 0; flex-wrap: wrap; max-width: 900px; margin: 0 auto;
+    }
+    .step { text-align: center; flex: 1; min-width: 120px; position: relative; padding: 0 10px; }
+    .step:not(:last-child)::after {
+      content: '→'; position: absolute; right: -12px; top: 22px;
+      font-size: 20px; color: #2563eb;
+    }
+    .step-num {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      display: grid; place-items: center; font-weight: 800; font-size: 16px;
+      margin: 0 auto 12px; box-shadow: 0 6px 20px rgba(37,99,235,.4);
+    }
+    .step-icon { font-size: 28px; margin-bottom: 10px; }
+    .step h4 { font-size: 13px; font-weight: 700; color: #e2e8f0; line-height: 1.4; }
+
+    /* ── QUICK ACTIONS / LIVE FEATURES / ROLES ─────── */
+    #bottom-grid { background: var(--navy); }
+    .bottom-grid {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 28px;
+      max-width: 1100px; margin: 0 auto;
+    }
+    .bottom-card {
+      background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: 20px; padding: 28px; display: flex; flex-direction: column; gap: 14px;
+    }
+    .bottom-card h3 { font-size: 18px; font-weight: 800; }
+
+    .quick-action {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 14px; border-radius: 12px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border); cursor: pointer;
+      transition: background .2s;
+    }
+    .quick-action:hover { background: rgba(37,99,235,.15); border-color: #2563eb; }
+    .qa-left { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 500; }
+    .qa-icon { font-size: 20px; }
+    .qa-arrow { color: var(--text-muted); font-size: 16px; }
+
+    .live-item { background: rgba(255,255,255,0.04); border-radius: 12px; padding: 14px 16px; }
+    .live-item .live-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+    .live-item .live-title  { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .live-badge { background: #dc2626; color: #fff; border-radius: 10px; padding: 2px 7px; font-size: 11px; font-weight: 700; }
+    .live-desc  { font-size: 12px; color: var(--text-muted); }
+    .progress-bar { height: 8px; background: rgba(255,255,255,.1); border-radius: 4px; margin-top: 8px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #2563eb, #7c3aed); border-radius: 4px; }
+
+    .role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .role-card {
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px 12px; text-align: center;
+      transition: border-color .2s; cursor: default;
+    }
+    .role-card:hover { border-color: #2563eb; }
+    .role-card .role-icon { font-size: 24px; margin-bottom: 6px; }
+    .role-card h5 { font-size: 12px; font-weight: 700; }
+    .role-card p  { font-size: 11px; color: var(--text-muted); }
+    .role-admin {
+      grid-column: span 2; background: linear-gradient(135deg, rgba(37,99,235,.2), rgba(124,58,237,.2));
+      border-color: rgba(37,99,235,.4);
+    }
+
+    /* ── FOOTER STATS ──────────────────────────────── */
+    #footer-stats {
+      background: linear-gradient(135deg, var(--blue) 0%, var(--purple) 100%);
+      padding: 48px 60px;
+    }
+    .stats-row { display: flex; justify-content: center; gap: 60px; flex-wrap: wrap; }
+    .fstat { text-align: center; }
+    .fstat-num { font-size: 36px; font-weight: 900; }
+    .fstat-lbl { font-size: 14px; color: rgba(255,255,255,.75); margin-top: 2px; }
+    .fstat-icon { font-size: 24px; margin-bottom: 8px; }
+
+    /* ── FOOTER ────────────────────────────────────── */
+    footer {
+      background: var(--navy); padding: 28px 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-top: 1px solid var(--border); font-size: 13px; color: var(--text-muted);
+    }
+
+    /* ── RESPONSIVE ────────────────────────────────── */
+    @media (max-width: 900px) {
+      nav { padding: 0 20px; }
+      .nav-links { display: none; }
+      #hero { padding: 90px 24px 50px; }
+      .hero-stats { display: none; }
+      section { padding: 60px 24px; }
+      .experience-grid { grid-template-columns: 1fr; }
+      .bottom-grid { grid-template-columns: 1fr; }
+      .steps { gap: 20px; }
+      .step:not(:last-child)::after { display: none; }
+      #footer-stats { padding: 40px 24px; }
+      .stats-row { gap: 30px; }
+      footer { flex-direction: column; gap: 10px; text-align: center; padding: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════ NAVBAR ═══════════ -->
+  <nav>
+    <a class="nav-logo" href="#">
+      <div class="logo-icon">✈️</div>
+      <div class="logo-text">
+        <span class="brand">TravelAI</span>
+        <span class="tagline">Smart Journey Planner</span>
+      </div>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#">Home</a></li>
+      <li><a href="#packages">Packages</a></li>
+      <li><a href="#">Custom Tour</a></li>
+      <li><a href="#">Dashboard</a></li>
+      <li><a href="#">About Us</a></li>
+      <li><a href="#">Contact</a></li>
+    </ul>
+    <a href="/api/users/login/" class="btn-login" id="nav-login-btn">
+      👤 Login / Register
+    </a>
+  </nav>
+
+  <!-- ═══════════ HERO ═══════════ -->
+  <section id="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-overlay"></div>
+
+    <div class="hero-content">
+      <div class="hero-badge"><span>🤖</span> AI POWERED PLATFORM</div>
+      <h1 class="hero-h1">
+        Plan Your<br>
+        <span class="gradient-text">Smart Journey</span>
+      </h1>
+      <div class="hero-sub">
+        <div class="ai-dot"></div>
+        AI-Powered Travel Planning System
+      </div>
+      <p class="hero-p">
+        Get personalized travel recommendations,<br>
+        smart budget optimization and<br>
+        complete travel management in one place.
+      </p>
+
+      <!-- Search Bar -->
+      <div class="search-bar">
+        <div class="search-field">
+          <label>Search Destination</label>
+          <input type="text" id="dest-input" placeholder="Ex: Bali, Thailand, London" />
+        </div>
+        <div class="search-field">
+          <label>Select Dates</label>
+          <input type="date" id="dates-input" />
+        </div>
+        <div class="search-field">
+          <label>Budget Range</label>
+          <select id="budget-select">
+            <option value="">Select Budget</option>
+            <option value="500-1000">£500 – £1,000</option>
+            <option value="1000-2000">£1,000 – £2,000</option>
+            <option value="2000-5000">£2,000 – £5,000</option>
+            <option value="5000+">£5,000+</option>
+          </select>
+        </div>
+        <div class="search-actions">
+          <button class="btn-primary" id="explore-btn" onclick="scrollToPackages()">🔍 Explore Packages</button>
+          <button class="btn-outline" id="custom-tour-btn">✏️ Create Custom Tour</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Floating Stat Cards -->
+    <div class="hero-stats">
+      <div class="stat-card">
+        <div class="stat-icon">😊</div>
+        <div>
+          <div class="stat-num">1000+</div>
+          <div class="stat-lbl">Happy Travelers</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📦</div>
+        <div>
+          <div class="stat-num">500+</div>
+          <div class="stat-lbl">Tour Packages</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🌍</div>
+        <div>
+          <div class="stat-num">50+</div>
+          <div class="stat-lbl">Destinations</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ CHOOSE YOUR EXPERIENCE ═══════════ -->
+  <section id="experience">
+    <div class="section-header" style="color:#1e293b;">
+      <h2 style="color:#1e293b;">CHOOSE YOUR EXPERIENCE</h2>
+    </div>
+    <div class="experience-grid">
+      <div class="exp-card green">
+        <div class="exp-icon">🏷️</div>
+        <h3>Discount Tour Packages</h3>
+        <p>Ready-made trips with<br>best prices &amp; exclusive deals</p>
+        <a href="#packages" class="exp-btn">Explore Packages &nbsp;→</a>
+      </div>
+      <div class="exp-card blue">
+        <div class="exp-icon">📍</div>
+        <h3>Create Your Own Tour</h3>
+        <p>Plan your fully customized<br>travel experience</p>
+        <a href="#" class="exp-btn">Create Custom Tour &nbsp;→</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ POWERFUL FEATURES ═══════════ -->
+  <section id="features">
+    <div class="section-header">
+      <h2>POWERFUL FEATURES</h2>
+      <p>Everything you need for the perfect trip, in one platform</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🤖</div>
+        <h4>AI Travel Recommendations</h4>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💰</div>
+        <h4>Smart Budget Optimization</h4>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🏨</div>
+        <h4>Hotel, Food &amp; Ride Integration</h4>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔔</div>
+        <h4>Real-Time Notifications</h4>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">👥</div>
+        <h4>Multi-Role Approval System</h4>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ POPULAR PACKAGES ═══════════ -->
+  <section id="packages">
+    <div class="section-header">
+      <h2>POPULAR DESTINATIONS / PACKAGES</h2>
+      <p>Handpicked destinations with unbeatable prices and exclusive deals</p>
+    </div>
+    <div class="packages-grid">
+      <!-- Bali -->
+      <div class="pkg-card">
+        <div class="pkg-img" style="background:linear-gradient(135deg,#065f46,#059669);">
+          <span>🌴</span>
+          <div class="pkg-badge">-23%</div>
+        </div>
+        <div class="pkg-body">
+          <div class="pkg-location">📍 Indonesia</div>
+          <div class="pkg-name">Bali Package</div>
+          <div class="pkg-dur">7 Days / 6 Nights</div>
+          <div class="pkg-pricing">
+            <span class="pkg-price">£1000</span>
+            <span class="pkg-old">£1300</span>
+          </div>
+          <button class="btn-view">View Details</button>
+        </div>
+      </div>
+
+      <!-- Thailand -->
+      <div class="pkg-card">
+        <div class="pkg-img" style="background:linear-gradient(135deg,#1e3a5f,#2563eb);">
+          <span>🏯</span>
+          <div class="pkg-badge popular">Popular</div>
+        </div>
+        <div class="pkg-body">
+          <div class="pkg-location">📍 Thailand</div>
+          <div class="pkg-name">Thailand Custom</div>
+          <div class="pkg-dur">Flexible Duration</div>
+          <div class="pkg-pricing">
+            <span class="pkg-price">From £1200</span>
+          </div>
+          <button class="btn-view">View Details</button>
+        </div>
+      </div>
+
+      <!-- Dubai -->
+      <div class="pkg-card">
+        <div class="pkg-img" style="background:linear-gradient(135deg,#78350f,#d97706);">
+          <span>🏙️</span>
+          <div class="pkg-badge">-20%</div>
+        </div>
+        <div class="pkg-body">
+          <div class="pkg-location">📍 UAE</div>
+          <div class="pkg-name">Dubai Adventure</div>
+          <div class="pkg-dur">5 Days / 4 Nights</div>
+          <div class="pkg-pricing">
+            <span class="pkg-price">£950</span>
+            <span class="pkg-old">£1200</span>
+          </div>
+          <button class="btn-view">View Details</button>
+        </div>
+      </div>
+
+      <!-- Maldives -->
+      <div class="pkg-card">
+        <div class="pkg-img" style="background:linear-gradient(135deg,#0c4a6e,#0ea5e9);">
+          <span>🏝️</span>
+          <div class="pkg-badge">-17%</div>
+        </div>
+        <div class="pkg-body">
+          <div class="pkg-location">📍 Maldives</div>
+          <div class="pkg-name">Maldives Escape</div>
+          <div class="pkg-dur">4 Days / 3 Nights</div>
+          <div class="pkg-pricing">
+            <span class="pkg-price">£1500</span>
+            <span class="pkg-old">£1800</span>
+          </div>
+          <button class="btn-view">View Details</button>
+        </div>
+      </div>
+
+      <!-- Singapore -->
+      <div class="pkg-card">
+        <div class="pkg-img" style="background:linear-gradient(135deg,#312e81,#6d28d9);">
+          <span>🦁</span>
+          <div class="pkg-badge">-21%</div>
+        </div>
+        <div class="pkg-body">
+          <div class="pkg-location">📍 Singapore</div>
+          <div class="pkg-name">Singapore Tour</div>
+          <div class="pkg-dur">6 Days / 5 Nights</div>
+          <div class="pkg-pricing">
+            <span class="pkg-price">£1100</span>
+            <span class="pkg-old">£1400</span>
+          </div>
+          <button class="btn-view">View Details</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ HOW IT WORKS ═══════════ -->
+  <section id="how">
+    <div class="section-header">
+      <h2>HOW THE SYSTEM WORKS</h2>
+      <p>Simple 5-step process from planning to your dream trip</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-icon">📦</div>
+        <h4>Choose Package OR Create Custom Tour</h4>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-icon">🤖</div>
+        <h4>AI Suggests Plan</h4>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-icon">📤</div>
+        <h4>Submit for Approval</h4>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-icon">👔</div>
+        <h4>Managers Review</h4>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-icon">✅</div>
+        <h4>Final Approved Tour</h4>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ BOTTOM GRID ═══════════ -->
+  <section id="bottom-grid">
+    <div class="bottom-grid">
+      <!-- Quick Actions -->
+      <div class="bottom-card">
+        <h3>⚡ Quick Actions</h3>
+        <div class="quick-action" id="qa-create">
+          <div class="qa-left"><span class="qa-icon">✏️</span> Create Custom Tour</div>
+          <span class="qa-arrow">›</span>
+        </div>
+        <div class="quick-action" id="qa-plans">
+          <div class="qa-left"><span class="qa-icon">📋</span> View Your Plans</div>
+          <span class="qa-arrow">›</span>
+        </div>
+        <div class="quick-action" id="qa-track">
+          <div class="qa-left"><span class="qa-icon">📊</span> Track Progress</div>
+          <span class="qa-arrow">›</span>
+        </div>
+        <div class="quick-action" id="qa-notif">
+          <div class="qa-left"><span class="qa-icon">🔔</span> View Notifications</div>
+          <span class="qa-arrow">›</span>
+        </div>
+      </div>
+
+      <!-- Live Features -->
+      <div class="bottom-card">
+        <h3>📡 Live System Features</h3>
+        <div class="live-item">
+          <div class="live-header">
+            <div class="live-title">🔔 Real-Time Notifications <span class="live-badge">3</span></div>
+          </div>
+          <div class="live-desc">You have 3 new updates</div>
+        </div>
+        <div class="live-item">
+          <div class="live-title">📈 Activity Tracking</div>
+          <div class="live-desc">Monitor your tour activities</div>
+        </div>
+        <div class="live-item">
+          <div class="live-header">
+            <div class="live-title">🏆 Progress Overview</div>
+            <span style="font-size:13px;font-weight:700;color:#34d399;">75%</span>
+          </div>
+          <div class="live-desc">Your tour is 75% completed</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:75%"></div></div>
+        </div>
+      </div>
+
+      <!-- Role System -->
+      <div class="bottom-card">
+        <h3>🎭 Role System</h3>
+        <div class="role-grid">
+          <div class="role-card role-admin" style="grid-column:span 2;">
+            <div class="role-icon">👑</div>
+            <h5>Admin Control</h5>
+            <p>Full System Access</p>
+          </div>
+          <div class="role-card">
+            <div class="role-icon">🏨</div>
+            <h5>Hotel Managers</h5>
+            <p>Manage Hotels</p>
+          </div>
+          <div class="role-card">
+            <div class="role-icon">🍽️</div>
+            <h5>Restaurant Managers</h5>
+            <p>Manage Restaurants</p>
+          </div>
+          <div class="role-card" style="grid-column:span 2;">
+            <div class="role-icon">🚗</div>
+            <h5>Ride Managers</h5>
+            <p>Manage Rides</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ FOOTER STATS ═══════════ -->
+  <section id="footer-stats">
+    <div class="stats-row">
+      <div class="fstat">
+        <div class="fstat-icon">😊</div>
+        <div class="fstat-num">1000+</div>
+        <div class="fstat-lbl">Happy Travelers</div>
+      </div>
+      <div class="fstat">
+        <div class="fstat-icon">📦</div>
+        <div class="fstat-num">500+</div>
+        <div class="fstat-lbl">Tour Packages</div>
+      </div>
+      <div class="fstat">
+        <div class="fstat-icon">🌍</div>
+        <div class="fstat-num">50+</div>
+        <div class="fstat-lbl">Destinations</div>
+      </div>
+      <div class="fstat">
+        <div class="fstat-icon">⚙️</div>
+        <div class="fstat-num">99.9%</div>
+        <div class="fstat-lbl">System Uptime</div>
+      </div>
+      <div class="fstat">
+        <div class="fstat-icon">🎧</div>
+        <div class="fstat-num">24/7</div>
+        <div class="fstat-lbl">Support Available</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ FOOTER ═══════════ -->
+  <footer>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="font-size:22px;">✈️</span>
+      <span><strong>TravelAI</strong> – Smart Journey Planner</span>
+    </div>
+    <div>&copy; 2025 TravelAI. All rights reserved. | AI-Powered Travel Planning</div>
+  </footer>
+
+  <script>
+    function scrollToPackages() {
+      document.getElementById('packages').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Animate feature cards on scroll
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.style.opacity = '1';
+          e.target.style.transform = 'translateY(0)';
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.feature-card, .pkg-card, .exp-card, .step').forEach(el => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(30px)';
+      el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+      observer.observe(el);
+    });
+  </script>
+</body>
+</html>
