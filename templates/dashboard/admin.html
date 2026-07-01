@@ -1,0 +1,82 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+{% block role_label %}System Admin{% endblock %}
+{% block expected_role %}admin{% endblock %}
+
+{% block nav_items %}
+  <li><a href="/dashboard/admin/" class="active"><i class="fa-solid fa-gauge-high"></i> Overview</a></li>
+  <li><a href="/admin/" target="_blank"><i class="fa-solid fa-gear"></i> Django Admin</a></li>
+  <li><a href="#tours"><i class="fa-solid fa-earth-americas"></i> All Tours</a></li>
+  <li><a href="/dashboard/planner/"><i class="fa-solid fa-route"></i> AI Travel Planner</a></li>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2>Admin Control Center</h2>
+  <p>Monitor platform activity, oversee all tours, and manage system operations.</p>
+</div>
+
+<div class="stats">
+  <div class="stat-card"><div class="icon">🌍</div><div class="label">Total Tours</div><div class="value" id="stat-tours">—</div></div>
+  <div class="stat-card"><div class="icon">👥</div><div class="label">Users</div><div class="value" id="stat-users">—</div></div>
+  <div class="stat-card"><div class="icon">⏳</div><div class="label">In Pipeline</div><div class="value" id="stat-pipeline">—</div></div>
+  <div class="stat-card"><div class="icon">💰</div><div class="label">Total Revenue</div><div class="value" id="stat-revenue">—</div></div>
+</div>
+
+<div class="panel" id="tours">
+  <h3><i class="fa-solid fa-table-list"></i> All Custom Tours</h3>
+  <div id="tours-wrap" class="loading">Loading platform data…</div>
+</div>
+
+<div class="actions">
+  <a href="/admin/" target="_blank" class="btn btn-primary"><i class="fa-solid fa-screwdriver-wrench"></i> Open Admin Panel</a>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  async function loadRoleData(user) {
+    const [toursRes, usersRes] = await Promise.all([
+      TravelAuth.fetchWithAuth('/api/tours/custom-tours/'),
+      TravelAuth.fetchWithAuth('/api/users/'),
+    ]);
+    const tours = toursRes.ok ? await toursRes.json() : [];
+    const users = usersRes.ok ? await usersRes.json() : [];
+
+    const pipeline = tours.filter(t =>
+      ['submitted_logistics', 'pending_finance', 'approved'].includes(t.status)
+    );
+    const paid = tours.filter(t => t.status === 'paid');
+
+    document.getElementById('stat-tours').textContent = tours.length;
+    document.getElementById('stat-users').textContent = users.length;
+    document.getElementById('stat-pipeline').textContent = pipeline.length;
+    document.getElementById('stat-revenue').textContent = formatMoney(
+      paid.reduce((sum, t) => sum + Number(t.total_price || 0), 0)
+    );
+
+    const wrap = document.getElementById('tours-wrap');
+    if (!tours.length) {
+      wrap.innerHTML = '<div class="empty">No custom tours in the system yet.</div>';
+      return;
+    }
+
+    wrap.innerHTML = `
+      <table>
+        <thead><tr><th>Tour</th><th>Client</th><th>Status</th><th>Total</th><th>Updated</th></tr></thead>
+        <tbody>
+          ${tours.slice(0, 20).map(t => `
+            <tr>
+              <td><strong>${t.title}</strong></td>
+              <td>${t.client?.username || '—'}</td>
+              <td>${statusBadge(t.status)}</td>
+              <td>${formatMoney(t.total_price)}</td>
+              <td>${new Date(t.updated_at).toLocaleDateString()}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>`;
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,77 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Financial Approver Dashboard{% endblock %}
+{% block role_label %}Financial Approver{% endblock %}
+{% block expected_role %}financial_approver{% endblock %}
+
+{% block nav_items %}
+  <li><a href="/dashboard/finance/" class="active"><i class="fa-solid fa-gauge-high"></i> Overview</a></li>
+  <li><a href="#approvals"><i class="fa-solid fa-file-invoice-dollar"></i> Pending Approvals</a></li>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2>Financial Approval Workspace</h2>
+  <p>Audit tour pricing, verify profit margins, and release tours for client payment.</p>
+</div>
+
+<div class="stats">
+  <div class="stat-card"><div class="icon">📋</div><div class="label">Pending Audit</div><div class="value" id="stat-pending">—</div></div>
+  <div class="stat-card"><div class="icon">✅</div><div class="label">Approved Tours</div><div class="value" id="stat-approved">—</div></div>
+  <div class="stat-card"><div class="icon">💳</div><div class="label">Paid Tours</div><div class="value" id="stat-paid">—</div></div>
+  <div class="stat-card"><div class="icon">📈</div><div class="label">Revenue Pipeline</div><div class="value" id="stat-revenue">—</div></div>
+</div>
+
+<div class="panel" id="approvals">
+  <h3><i class="fa-solid fa-scale-balanced"></i> Financial Review Queue</h3>
+  <div id="queue-wrap" class="loading">Loading financial queue…</div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  async function loadRoleData(user) {
+    const res = await TravelAuth.fetchWithAuth('/api/tours/custom-tours/');
+    const tours = res.ok ? await res.json() : [];
+
+    const pending = tours.filter(t => t.status === 'pending_finance');
+    const approved = tours.filter(t => t.status === 'approved');
+    const paid = tours.filter(t => t.status === 'paid');
+
+    document.getElementById('stat-pending').textContent = pending.length;
+    document.getElementById('stat-approved').textContent = approved.length;
+    document.getElementById('stat-paid').textContent = paid.length;
+    document.getElementById('stat-revenue').textContent = formatMoney(
+      [...approved, ...paid].reduce((sum, t) => sum + Number(t.total_price || 0), 0)
+    );
+
+    const wrap = document.getElementById('queue-wrap');
+    if (!pending.length) {
+      wrap.innerHTML = '<div class="empty">No tours awaiting financial approval.</div>';
+      return;
+    }
+
+    wrap.innerHTML = `
+      <table>
+        <thead>
+          <tr><th>Tour</th><th>Client</th><th>Base Cost</th><th>Markup</th><th>Total</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          ${pending.map(t => `
+            <tr>
+              <td><strong>${t.title}</strong></td>
+              <td>${t.client?.username || '—'}</td>
+              <td>${formatMoney(t.base_cost)}</td>
+              <td>${formatMoney(t.markup_amount)}</td>
+              <td>${formatMoney(t.total_price)}</td>
+              <td>${statusBadge(t.status)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      <p style="margin-top:14px;color:var(--muted);font-size:13px;">
+        Approve/reject workflows will be expanded in the next dashboard iteration.
+      </p>`;
+  }
+</script>
+{% endblock %}

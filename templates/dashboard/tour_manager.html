@@ -1,0 +1,74 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Tour Manager Dashboard{% endblock %}
+{% block role_label %}Tour Manager{% endblock %}
+{% block expected_role %}tour_manager{% endblock %}
+
+{% block nav_items %}
+  <li><a href="/dashboard/manager/" class="active"><i class="fa-solid fa-gauge-high"></i> Overview</a></li>
+  <li><a href="#pipeline"><i class="fa-solid fa-list-check"></i> Review Queue</a></li>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2>Tour Manager Workspace</h2>
+  <p>Review client itineraries, validate logistics, and apply service markups before financial approval.</p>
+</div>
+
+<div class="stats">
+  <div class="stat-card"><div class="icon">📥</div><div class="label">Awaiting Review</div><div class="value" id="stat-pending">—</div></div>
+  <div class="stat-card"><div class="icon">✅</div><div class="label">Approved by Me</div><div class="value" id="stat-approved">—</div></div>
+  <div class="stat-card"><div class="icon">❌</div><div class="label">Rejected</div><div class="value" id="stat-rejected">—</div></div>
+  <div class="stat-card"><div class="icon">💰</div><div class="label">Pipeline Value</div><div class="value" id="stat-value">—</div></div>
+</div>
+
+<div class="panel" id="pipeline">
+  <h3><i class="fa-solid fa-clipboard-check"></i> Logistics Review Queue</h3>
+  <div id="queue-wrap" class="loading">Loading review queue…</div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  async function loadRoleData(user) {
+    const res = await TravelAuth.fetchWithAuth('/api/tours/custom-tours/');
+    const tours = res.ok ? await res.json() : [];
+
+    const pending = tours.filter(t => t.status === 'submitted_logistics');
+    const approved = tours.filter(t => t.assigned_manager === user.id || t.status === 'pending_finance');
+    const rejected = tours.filter(t => t.status === 'rejected');
+
+    document.getElementById('stat-pending').textContent = pending.length;
+    document.getElementById('stat-approved').textContent = approved.length;
+    document.getElementById('stat-rejected').textContent = rejected.length;
+    document.getElementById('stat-value').textContent = formatMoney(
+      pending.reduce((sum, t) => sum + Number(t.total_price || 0), 0)
+    );
+
+    const wrap = document.getElementById('queue-wrap');
+    if (!pending.length) {
+      wrap.innerHTML = '<div class="empty">No tours awaiting logistics review right now.</div>';
+      return;
+    }
+
+    wrap.innerHTML = `
+      <table>
+        <thead><tr><th>Tour</th><th>Client</th><th>Dates</th><th>Base Cost</th><th>Status</th></tr></thead>
+        <tbody>
+          ${pending.map(t => `
+            <tr>
+              <td><strong>${t.title}</strong></td>
+              <td>${t.client?.username || '—'}</td>
+              <td>${t.start_date} → ${t.end_date}</td>
+              <td>${formatMoney(t.base_cost)}</td>
+              <td>${statusBadge(t.status)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      <p style="margin-top:14px;color:var(--muted);font-size:13px;">
+        Full approve/reject actions will be available in the comprehensive dashboard update.
+      </p>`;
+  }
+</script>
+{% endblock %}

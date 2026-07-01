@@ -1,0 +1,19 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard – TravelAI</title>
+  <script src="{% static 'js/auth.js' %}"></script>
+</head>
+<body>
+  <p style="font-family:sans-serif;text-align:center;margin-top:40vh;color:#666;">Redirecting to your dashboard…</p>
+  <script>
+    (async () => {
+      const user = await TravelAuth.requireAuth();
+      if (user) TravelAuth.redirectToRoleDashboard(user.role);
+    })();
+  </script>
+</body>
+</html>

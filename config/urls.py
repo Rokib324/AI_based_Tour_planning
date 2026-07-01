@@ -24,6 +24,23 @@ from django.views.generic import TemplateView
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', TemplateView.as_view(template_name='landing.html'), name='home'),
+
+    # Auth pages
+    path('auth/login/', TemplateView.as_view(template_name='auth/login.html'), name='page_login'),
+    path('auth/register/', TemplateView.as_view(template_name='auth/register.html'), name='page_register'),
+    path('auth/forgot-password/', TemplateView.as_view(template_name='auth/forgot-password.html'), name='page_forgot_password'),
+    path('auth/reset-password/', TemplateView.as_view(template_name='auth/reset-password.html'), name='page_reset_password'),
+    path('auth/verify-email/', TemplateView.as_view(template_name='auth/verify-email.html'), name='page_verify_email'),
+
+    # Role-based dashboards
+    path('dashboard/', TemplateView.as_view(template_name='dashboard/index.html'), name='dashboard'),
+    path('dashboard/client/', TemplateView.as_view(template_name='dashboard/client.html'), name='dashboard_client'),
+    path('dashboard/manager/', TemplateView.as_view(template_name='dashboard/tour_manager.html'), name='dashboard_manager'),
+    path('dashboard/finance/', TemplateView.as_view(template_name='dashboard/financial_approver.html'), name='dashboard_finance'),
+    path('dashboard/admin/', TemplateView.as_view(template_name='dashboard/admin.html'), name='dashboard_admin'),
+    path('dashboard/planner/', TemplateView.as_view(template_name='dashboard/travel_planner.html'), name='travel_planner'),
+
+
     path('api/users/', include('users.urls')),
     path('api/tours/', include('tours.urls')),
     path('api/ai/', include('ai_service.urls')),

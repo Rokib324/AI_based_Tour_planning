@@ -1,0 +1,729 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}AI Travel Planner{% endblock %}
+{% block role_label %}Client Portal{% endblock %}
+{% block expected_role %}client{% endblock %}
+
+{% block extra_css %}
+<style>
+  .planner-grid {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  @media(max-width: 992px) {
+    .planner-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .input-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+  }
+  .results-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    min-height: 400px;
+  }
+  .form-section {
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .form-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+  .form-section-title {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .form-group {
+    margin-bottom: 14px;
+  }
+  .form-group label {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+  .form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,.03);
+    color: var(--white);
+    font-family: inherit;
+    font-size: 13px;
+    transition: border-color .2s;
+  }
+  .form-control:focus {
+    outline: none;
+    border-color: var(--blue);
+  }
+  select.form-control option {
+    background: var(--bg2);
+    color: var(--white);
+  }
+  .radio-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .radio-btn {
+    flex: 1;
+    position: relative;
+    text-align: center;
+  }
+  .radio-btn input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  .radio-label {
+    display: block;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    background: rgba(255,255,255,.02);
+    transition: background .2s, border-color .2s;
+  }
+  .radio-btn input:checked + .radio-label {
+    background: rgba(37,99,235,.15);
+    border-color: var(--blue);
+    color: var(--white);
+  }
+  .checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    color: #cbd5e1;
+  }
+  .checkbox-item input {
+    accent-color: var(--blue);
+  }
+  .btn-generate {
+    width: 100%;
+    padding: 12px;
+    font-size: 14px;
+    justify-content: center;
+    margin-top: 10px;
+  }
+  .results-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: var(--muted);
+    padding: 80px 20px;
+  }
+  .results-placeholder i {
+    font-size: 48px;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, var(--blue), var(--purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 60px 20px;
+  }
+  .loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(255,255,255,.05);
+    border-top: 3px solid var(--blue);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+  }
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  .loading-step {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .loading-step.active {
+    color: var(--white);
+  }
+  .loading-step.active i {
+    color: var(--blue);
+  }
+  .results-container {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+  }
+  .section-title {
+    font-size: 18px;
+    font-weight: 800;
+    border-left: 3px solid var(--blue);
+    padding-left: 10px;
+    margin-bottom: 16px;
+    color: var(--white);
+  }
+  .flight-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .flight-card {
+    background: rgba(255,255,255,.02);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform .2s, box-shadow .2s;
+  }
+  .flight-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,.3);
+  }
+  .airline-logo-wrap {
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+  }
+  .airline-logo {
+    max-height: 100%;
+    max-width: 120px;
+    object-fit: contain;
+  }
+  .flight-card h4 {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .flight-detail {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    line-height: 1.4;
+  }
+  .flight-price {
+    font-size: 20px;
+    font-weight: 800;
+    color: #4ade80;
+    margin: 12px 0;
+  }
+  .flight-book-btn {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    text-align: center;
+    border-radius: 8px;
+    background: var(--blue);
+    color: var(--white);
+    font-weight: 600;
+    font-size: 13px;
+    text-decoration: none;
+    transition: opacity .2s;
+  }
+  .flight-book-btn:hover {
+    opacity: .9;
+  }
+  .markdown-content {
+    background: rgba(255,255,255,.01);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    color: #cbd5e1;
+    font-size: 14px;
+    line-height: 1.6;
+    overflow-x: auto;
+  }
+  .markdown-content h1, .markdown-content h2, .markdown-content h3 {
+    color: var(--white);
+    margin-top: 16px;
+    margin-bottom: 10px;
+  }
+  .markdown-content h1 { font-size: 18px; }
+  .markdown-content h2 { font-size: 16px; }
+  .markdown-content h3 { font-size: 14px; }
+  .markdown-content p {
+    margin-bottom: 12px;
+  }
+  .markdown-content ul, .markdown-content ol {
+    margin-left: 20px;
+    margin-bottom: 12px;
+  }
+  .markdown-content li {
+    margin-bottom: 4px;
+  }
+  .markdown-content strong {
+    color: var(--white);
+  }
+  .trip-banner {
+    background: linear-gradient(135deg, rgba(37,99,235,.15), rgba(124,58,237,.15));
+    border: 1px solid rgba(255,255,255,.05);
+    border-radius: 14px;
+    padding: 18px;
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .trip-banner h3 {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .trip-banner p {
+    font-size: 12px;
+    color: var(--muted);
+  }
+</style>
+{% endblock %}
+
+{% block nav_items %}
+  <li><a href="/dashboard/client/"><i class="fa-solid fa-gauge-high"></i> Overview</a></li>
+  <li><a href="/#packages"><i class="fa-solid fa-suitcase-rolling"></i> Browse Packages</a></li>
+  <li><a href="/"><i class="fa-solid fa-wand-magic-sparkles"></i> Plan Custom Tour</a></li>
+  <li><a href="/dashboard/planner/" class="active"><i class="fa-solid fa-route"></i> AI Travel Planner</a></li>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2>🌍 AI-Powered Travel Planner</h2>
+  <p>Plan your dream trip with AI! Get personalized recommendations for flights, hotels, activities, and an interactive itinerary.</p>
+</div>
+
+<div class="planner-grid">
+  <!-- Input Parameters Panel -->
+  <aside class="input-panel">
+    <form id="planner-form" onsubmit="event.preventDefault(); generateTravelPlan();">
+      
+      <!-- Destinations section -->
+      <div class="form-section">
+        <h4 class="form-section-title"><i class="fa-solid fa-map-location-dot"></i> Destinations</h4>
+        <div class="form-group">
+          <label for="input-source">🛫 Departure City (IATA Code):</label>
+          <input type="text" id="input-source" class="form-control" placeholder="e.g., BOM" value="BOM" required maxlength="3" style="text-transform: uppercase;">
+        </div>
+        <div class="form-group">
+          <label for="input-destination">🛬 Destination (IATA Code):</label>
+          <input type="text" id="input-destination" class="form-control" placeholder="e.g., DEL" value="DEL" required maxlength="3" style="text-transform: uppercase;">
+        </div>
+      </div>
+
+      <!-- Schedule section -->
+      <div class="form-section">
+        <h4 class="form-section-title"><i class="fa-solid fa-calendar-days"></i> Dates & Duration</h4>
+        <div class="form-group">
+          <label for="input-dep-date">Departure Date:</label>
+          <input type="date" id="input-dep-date" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label for="input-ret-date">Return Date:</label>
+          <input type="date" id="input-ret-date" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label for="input-duration">🕒 Trip Duration (days):</label>
+          <input type="range" id="input-duration" min="1" max="14" value="5" class="form-control" style="padding: 0; background: transparent; cursor: pointer;">
+          <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 4px;">
+            <span>1 day</span>
+            <span id="duration-val" style="font-weight: 700; color: var(--white);">5 days</span>
+            <span>14 days</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preferences section -->
+      <div class="form-section">
+        <h4 class="form-section-title"><i class="fa-solid fa-sliders"></i> Preferences</h4>
+        <div class="form-group">
+          <label for="input-theme">🎭 Select Travel Theme:</label>
+          <select id="input-theme" class="form-control">
+            <option value="💑 Couple Getaway">💑 Couple Getaway</option>
+            <option value="👨👩👧👦 Family Vacation">👨👩👧👦 Family Vacation</option>
+            <option value="🏔️ Adventure Trip" selected>🏔️ Adventure Trip</option>
+            <option value="🧳 Solo Exploration">🧳 Solo Exploration</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>💰 Budget Preference:</label>
+          <div class="radio-group">
+            <label class="radio-btn">
+              <input type="radio" name="budget" value="Economy" checked>
+              <span class="radio-label">Economy</span>
+            </label>
+            <label class="radio-btn">
+              <input type="radio" name="budget" value="Standard">
+              <span class="radio-label">Standard</span>
+            </label>
+            <label class="radio-btn">
+              <input type="radio" name="budget" value="Luxury">
+              <span class="radio-label">Luxury</span>
+            </label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>✈️ Flight Class:</label>
+          <div class="radio-group">
+            <label class="radio-btn">
+              <input type="radio" name="flight_class" value="Economy" checked>
+              <span class="radio-label">Economy</span>
+            </label>
+            <label class="radio-btn">
+              <input type="radio" name="flight_class" value="Business">
+              <span class="radio-label">Business</span>
+            </label>
+            <label class="radio-btn">
+              <input type="radio" name="flight_class" value="First Class">
+              <span class="radio-label">First</span>
+            </label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="input-rating">🏨 Preferred Hotel Rating:</label>
+          <select id="input-rating" class="form-control">
+            <option value="Any" selected>Any</option>
+            <option value="3⭐">3⭐</option>
+            <option value="4⭐">4⭐</option>
+            <option value="5⭐">5⭐</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="input-activities">🌍 Activities Enjoyed:</label>
+          <textarea id="input-activities" class="form-control" rows="3" placeholder="Relaxing on the beach, historical sites..."></textarea>
+        </div>
+      </div>
+
+      <!-- Add-ons section -->
+      <div class="form-section">
+        <h4 class="form-section-title"><i class="fa-solid fa-passport"></i> Essentials</h4>
+        <div class="checkbox-group">
+          <label class="checkbox-item">
+            <input type="checkbox" id="input-visa"> Check Visa Requirements
+          </label>
+          <label class="checkbox-item">
+            <input type="checkbox" id="input-insurance"> Get Travel Insurance
+          </label>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-generate" id="btn-generate">
+        <i class="fa-solid fa-rocket"></i> Generate Travel Plan
+      </button>
+    </form>
+  </aside>
+
+  <!-- Output Results Panel -->
+  <main class="results-panel" id="results-panel">
+    <!-- Initial Placeholder State -->
+    <div class="results-placeholder" id="state-placeholder">
+      <i class="fa-solid fa-earth-americas"></i>
+      <h3>Your Adventure Awaits!</h3>
+      <p>Configure your destination, dates, and budget on the left, then click Generate Travel Plan.</p>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading-container" id="state-loading" style="display: none;">
+      <div class="loading-spinner"></div>
+      <h3 style="margin-bottom: 12px; color: var(--white);">Generating Your Travel Plan...</h3>
+      <div id="loading-steps">
+        <div class="loading-step active" id="step-flights"><i class="fa-solid fa-plane-departure"></i> <span>Fetching best flight options...</span></div>
+        <div class="loading-step" id="step-research"><i class="fa-solid fa-magnifying-glass"></i> <span>Researching best attractions & activities...</span></div>
+        <div class="loading-step" id="step-hotels"><i class="fa-solid fa-hotel"></i> <span>Searching for hotels & restaurants...</span></div>
+        <div class="loading-step" id="step-itinerary"><i class="fa-solid fa-map"></i> <span>Creating your personalized itinerary...</span></div>
+      </div>
+    </div>
+
+    <!-- Final Results State -->
+    <div class="results-container" id="state-results" style="display: none;">
+      <div class="trip-banner">
+        <h3 id="result-trip-title">🌟 Couple Getaway to DEL is about to begin! 🌟</h3>
+        <p>We found the best flights, stays, and experiences for your unforgettable journey.</p>
+      </div>
+
+      <!-- Flights Section -->
+      <section>
+        <h3 class="section-title"><i class="fa-solid fa-plane"></i> Cheapest Flight Options</h3>
+        <div class="flight-cards" id="result-flights">
+          <!-- Flight cards will be injected here -->
+        </div>
+        <div id="no-flights-warning" class="empty" style="display: none; padding: 10px 0;">
+          ⚠️ No flight data available. Check your airport IATA codes or SerpApi Key configuration.
+        </div>
+      </section>
+
+      <!-- Hotels & Restaurants Section -->
+      <section>
+        <h3 class="section-title"><i class="fa-solid fa-hotel"></i> Hotels & Restaurants</h3>
+        <div class="markdown-content" id="result-hotels">
+          <!-- Hotels markdown content -->
+        </div>
+      </section>
+
+      <!-- Personalized Itinerary Section -->
+      <section>
+        <h3 class="section-title"><i class="fa-solid fa-route"></i> Your Personalized Itinerary</h3>
+        <div class="markdown-content" id="result-itinerary">
+          <!-- Itinerary markdown content -->
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Setup date defaults (tomorrow and +5 days)
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const fiveDaysLater = new Date(tomorrow);
+  fiveDaysLater.setDate(fiveDaysLater.getDate() + 5);
+
+  document.getElementById('input-dep-date').value = tomorrow.toISOString().split('T')[0];
+  document.getElementById('input-ret-date').value = fiveDaysLater.toISOString().split('T')[0];
+
+  // Sync dates duration slider and labels
+  const depInput = document.getElementById('input-dep-date');
+  const retInput = document.getElementById('input-ret-date');
+  const durationSlider = document.getElementById('input-duration');
+  const durationVal = document.getElementById('duration-val');
+
+  function calculateDuration() {
+    const s = new Date(depInput.value);
+    const e = new Date(retInput.value);
+    if (!isNaN(s) && !isNaN(e)) {
+      const days = Math.max(1, Math.round((e - s) / (1000 * 60 * 60 * 24)) + 1);
+      durationSlider.value = Math.min(14, Math.max(1, days));
+      durationVal.textContent = durationSlider.value + ' days';
+    }
+  }
+
+  depInput.addEventListener('change', calculateDuration);
+  retInput.addEventListener('change', calculateDuration);
+
+  durationSlider.addEventListener('input', () => {
+    durationVal.textContent = durationSlider.value + ' days';
+    // Update return date accordingly
+    const s = new Date(depInput.value);
+    if (!isNaN(s)) {
+      const e = new Date(s);
+      e.setDate(s.getDate() + parseInt(durationSlider.value) - 1);
+      retInput.value = e.toISOString().split('T')[0];
+    }
+  });
+
+  async function generateTravelPlan() {
+    const source = document.getElementById('input-source').value.trim().toUpperCase();
+    const destination = document.getElementById('input-destination').value.trim().toUpperCase();
+    const departure_date = depInput.value;
+    const return_date = retInput.value;
+    const num_days = parseInt(durationSlider.value);
+    const themeSelect = document.getElementById('input-theme');
+    const travel_theme = themeSelect.value;
+    const activity_preferences = document.getElementById('input-activities').value.trim() || 'Sightseeing, exploring local attractions';
+    
+    const budget = document.querySelector('input[name="budget"]:checked').value;
+    const flight_class = document.querySelector('input[name="flight_class"]:checked').value;
+    const hotel_rating = document.getElementById('input-rating').value;
+    const visa_required = document.getElementById('input-visa').checked;
+    const travel_insurance = document.getElementById('input-insurance').checked;
+
+    // Show Loading state
+    document.getElementById('state-placeholder').style.display = 'none';
+    document.getElementById('state-results').style.display = 'none';
+    document.getElementById('state-loading').style.display = 'flex';
+    
+    // Reset steps styles
+    const steps = ['step-flights', 'step-research', 'step-hotels', 'step-itinerary'];
+    steps.forEach(id => {
+      document.getElementById(id).classList.remove('active');
+    });
+    
+    const activeStep = document.getElementById('step-flights');
+    activeStep.classList.add('active');
+
+    // Simulate step progress visual indicators for rich aesthetics
+    let currentStepIndex = 0;
+    const progressTimer = setInterval(() => {
+      if (currentStepIndex < steps.length - 1) {
+        document.getElementById(steps[currentStepIndex]).classList.remove('active');
+        currentStepIndex++;
+        document.getElementById(steps[currentStepIndex]).classList.add('active');
+      }
+    }, 4500);
+
+    const btn = document.getElementById('btn-generate');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Planning...';
+
+    try {
+      const res = await TravelAuth.fetchWithAuth('/api/ai/generate-travel-plan/', {
+        method: 'POST',
+        body: JSON.stringify({
+          source,
+          destination,
+          departure_date,
+          return_date,
+          num_days,
+          travel_theme,
+          activity_preferences,
+          budget,
+          flight_class,
+          hotel_rating,
+          visa_required,
+          travel_insurance
+        })
+      });
+
+      clearInterval(progressTimer);
+
+      if (res.ok) {
+        const data = await res.json();
+        renderResults(data, destination, travel_theme);
+      } else {
+        const errData = await res.json();
+        alert('Error: ' + (errData.detail || 'Could not query AI Travel Planner.'));
+        showPlaceholderState();
+      }
+    } catch (err) {
+      clearInterval(progressTimer);
+      console.error(err);
+      alert('An unexpected error occurred while communicating with the travel assistant.');
+      showPlaceholderState();
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-rocket"></i> Generate Travel Plan';
+    }
+  }
+
+  function showPlaceholderState() {
+    document.getElementById('state-loading').style.display = 'none';
+    document.getElementById('state-results').style.display = 'none';
+    document.getElementById('state-placeholder').style.display = 'flex';
+  }
+
+  function formatFlightTime(isoStr) {
+    if (!isoStr || isoStr === 'N/A') return 'N/A';
+    try {
+      // Input example: "2026-07-05 18:20"
+      const dateParts = isoStr.split(' ');
+      if (dateParts.length === 2) {
+        const [y, m, d] = dateParts[0].split('-').map(Number);
+        const [h, min] = dateParts[1].split(':').map(Number);
+        const dt = new Date(y, m - 1, d, h, min);
+        return dt.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'}) + ' | ' + dt.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'});
+      }
+      return isoStr;
+    } catch {
+      return isoStr;
+    }
+  }
+
+  function renderResults(data, destination, travel_theme) {
+    document.getElementById('state-loading').style.display = 'none';
+    document.getElementById('state-results').style.display = 'flex';
+
+    // 1. Update banner
+    document.getElementById('result-trip-title').textContent = `🌟 Your ${travel_theme} to ${destination} is about to begin! 🌟`;
+
+    // 2. Render Flights
+    const flightsContainer = document.getElementById('result-flights');
+    const noFlightsWarning = document.getElementById('no-flights-warning');
+    flightsContainer.innerHTML = '';
+
+    if (data.flights && data.flights.length > 0) {
+      noFlightsWarning.style.display = 'none';
+      data.flights.forEach(flight => {
+        const logo = flight.airline_logo || '';
+        const airline = flight.airline || 'Unknown Airline';
+        const price = flight.price ? `₹${flight.price.toLocaleString()}` : 'N/A';
+        const duration = flight.total_duration ? `${flight.total_duration} min` : 'N/A';
+        
+        const fInfo = flight.flights && flight.flights[0] ? flight.flights[0] : {};
+        const arrivalInfo = flight.flights && flight.flights[flight.flights.length - 1] ? flight.flights[flight.flights.length - 1] : {};
+        
+        const departure_time = formatFlightTime(fInfo.departure_airport?.time);
+        const arrival_time = formatFlightTime(arrivalInfo.arrival_airport?.time);
+        const bookingLink = flight.booking_link || '#';
+
+        const card = document.createElement('div');
+        card.className = 'flight-card';
+        card.innerHTML = `
+          <div>
+            <div class="airline-logo-wrap">
+              ${logo ? `<img src="${logo}" class="airline-logo" alt="${airline} Logo" />` : `<i class="fa-solid fa-plane-up" style="font-size: 24px; color: var(--muted);"></i>`}
+            </div>
+            <h4>${airline}</h4>
+            <p class="flight-detail"><strong>Departure:</strong><br>${departure_time}</p>
+            <p class="flight-detail"><strong>Arrival:</strong><br>${arrival_time}</p>
+            <p class="flight-detail"><strong>Duration:</strong> ${duration}</p>
+          </div>
+          <div>
+            <h2 class="flight-price">${price}</h2>
+            <a href="${bookingLink}" target="_blank" class="flight-book-btn">🔗 Book Now</a>
+          </div>
+        `;
+        flightsContainer.appendChild(card);
+      });
+    } else {
+      noFlightsWarning.style.display = 'block';
+    }
+
+    // 3. Render Hotels & Restaurants
+    const hotelsContainer = document.getElementById('result-hotels');
+    if (window.marked && data.hotels_restaurants) {
+      hotelsContainer.innerHTML = marked.parse(data.hotels_restaurants);
+    } else {
+      hotelsContainer.textContent = data.hotels_restaurants || 'No recommendations generated.';
+    }
+
+    // 4. Render Itinerary
+    const itineraryContainer = document.getElementById('result-itinerary');
+    if (window.marked && data.itinerary) {
+      itineraryContainer.innerHTML = marked.parse(data.itinerary);
+    } else {
+      itineraryContainer.textContent = data.itinerary || 'No itinerary generated.';
+    }
+  }
+</script>
+{% endblock %}

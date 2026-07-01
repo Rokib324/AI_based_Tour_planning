@@ -1,0 +1,99 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Verify Email – TravelAI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Inter',sans-serif;background:#0a0e2a;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+    .card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:36px;width:100%;max-width:420px;text-align:center;}
+    h1{font-size:24px;font-weight:800;margin-bottom:6px;}
+    p{color:#94a3b8;font-size:14px;margin-bottom:24px;line-height:1.5;}
+    .otp-input{font-size:28px;letter-spacing:12px;text-align:center;font-weight:700;padding:14px;}
+    button{width:100%;padding:13px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;border-radius:12px;font-weight:700;cursor:pointer;margin-top:8px;}
+    .resend{background:transparent;border:1px solid rgba(255,255,255,.15);margin-top:10px;}
+    .alert{display:none;padding:12px;border-radius:10px;font-size:13px;margin-bottom:14px;text-align:left;}
+    .alert.error{background:rgba(220,38,38,.15);color:#fca5a5;}
+    .alert.success{background:rgba(22,163,74,.15);color:#86efac;}
+    input{width:100%;padding:12px;background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;}
+    label{font-size:13px;font-weight:600;display:block;margin-bottom:6px;text-align:left;}
+    .field{margin-bottom:14px;}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Verify your email 📧</h1>
+    <p>We sent a 6-digit code to <strong id="email-display">your email</strong>. Enter it below to activate your account.</p>
+    <div id="alert" class="alert"></div>
+    <form id="form">
+      <div class="field">
+        <label for="otp">Verification code</label>
+        <input class="otp-input" type="text" id="otp" maxlength="6" pattern="[0-9]{6}" placeholder="000000" required/>
+      </div>
+      <button type="submit" id="btn-verify">Verify Email</button>
+      <button type="button" class="resend" id="btn-resend">Resend code</button>
+    </form>
+  </div>
+  <script src="{% static 'js/auth.js' %}"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const email = params.get('email') || localStorage.getItem('pending_verify_email') || '';
+    document.getElementById('email-display').textContent = email || 'your email';
+    const alertEl = document.getElementById('alert');
+
+    function showAlert(msg, type) {
+      alertEl.textContent = msg;
+      alertEl.className = `alert ${type}`;
+      alertEl.style.display = 'block';
+    }
+
+    document.getElementById('form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!email) { showAlert('Email missing. Please register again.', 'error'); return; }
+      const btn = document.getElementById('btn-verify');
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/users/otp/email/verify/', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ email, otp: document.getElementById('otp').value }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          showAlert('Email verified! Redirecting to dashboard…', 'success');
+          localStorage.removeItem('pending_verify_email');
+          if (TravelAuth.getAccessToken()) {
+            const user = await TravelAuth.fetchProfile();
+            setTimeout(() => TravelAuth.redirectToRoleDashboard(user?.role || 'client'), 1500);
+          } else {
+            setTimeout(() => window.location.href = '/auth/login/', 1500);
+          }
+        } else {
+          showAlert(data.otp?.[0] || data.email?.[0] || 'Verification failed.', 'error');
+        }
+      } catch {
+        showAlert('Network error.', 'error');
+      }
+      btn.disabled = false;
+    });
+
+    document.getElementById('btn-resend').addEventListener('click', async () => {
+      if (!email) { showAlert('Email missing.', 'error'); return; }
+      try {
+        const res = await fetch('/api/users/otp/email/send/', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ email }),
+        });
+        const data = await res.json();
+        showAlert(res.ok ? (data.message || 'Code resent.') : 'Failed to resend.', res.ok ? 'success' : 'error');
+      } catch {
+        showAlert('Network error.', 'error');
+      }
+    });
+  </script>
+</body>
+</html>

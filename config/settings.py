@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+# pyrefly: ignore [missing-import]
+from decouple import config, Csv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,10 +22,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-m1zcut)8r0gwp#lv1-++9@u20iw3yi+iihb9rp6+bg0b)34tf1'
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-m1zcut)8r0gwp#lv1-++9@u20iw3yi+iihb9rp6+bg0b)34tf1')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=True, cast=bool)
 
 ALLOWED_HOSTS = []
 
@@ -41,6 +43,7 @@ INSTALLED_APPS = [
     # Third-party apps
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     
     # Local apps
@@ -74,6 +77,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'users.context_processors.oauth_settings',
             ],
         },
     },
@@ -129,6 +133,37 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+
+# ── Email (Gmail SMTP) ────────────────────────────────────────────────────
+EMAIL_HOST           = config('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT           = config('EMAIL_PORT', default=587, cast=int)
+EMAIL_USE_TLS        = True
+EMAIL_HOST_USER      = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD  = config('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL   = config('DEFAULT_FROM_EMAIL', default='TravelAI <noreply@travelai.com>')
+EMAIL_BACKEND        = (
+    'django.core.mail.backends.smtp.EmailBackend'
+    if EMAIL_HOST_USER
+    else 'django.core.mail.backends.console.EmailBackend'
+)
+
+# ── Google OAuth ──────────────────────────────────────────────────────────
+GOOGLE_CLIENT_ID = config('GOOGLE_CLIENT_ID', default='')
+
+# ── Facebook OAuth ────────────────────────────────────────────────────────
+FACEBOOK_APP_ID     = config('FACEBOOK_APP_ID', default='')
+FACEBOOK_APP_SECRET = config('FACEBOOK_APP_SECRET', default='')
+
+# ── Twilio (SMS OTP) ──────────────────────────────────────────────────────
+TWILIO_ACCOUNT_SID  = config('TWILIO_ACCOUNT_SID', default='')
+TWILIO_AUTH_TOKEN   = config('TWILIO_AUTH_TOKEN', default='')
+TWILIO_PHONE_NUMBER = config('TWILIO_PHONE_NUMBER', default='')
+
+# ── Misc ──────────────────────────────────────────────────────────────────
+FRONTEND_BASE_URL   = config('FRONTEND_BASE_URL', default='http://127.0.0.1:8000')
+OTP_EXPIRY_MINUTES  = 10
+GEMINI_API_KEY      = config('GEMINI_API_KEY', default='')
+SERPAPI_KEY         = config('SERPAPI_KEY', default='')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field

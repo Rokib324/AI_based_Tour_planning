@@ -1,0 +1,75 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Client Dashboard{% endblock %}
+{% block role_label %}Client Portal{% endblock %}
+{% block expected_role %}client{% endblock %}
+
+{% block nav_items %}
+  <li><a href="/dashboard/client/" class="active"><i class="fa-solid fa-gauge-high"></i> Overview</a></li>
+  <li><a href="/#packages"><i class="fa-solid fa-suitcase-rolling"></i> Browse Packages</a></li>
+  <li><a href="/"><i class="fa-solid fa-wand-magic-sparkles"></i> Plan Custom Tour</a></li>
+  <li><a href="/dashboard/planner/"><i class="fa-solid fa-route"></i> AI Travel Planner</a></li>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2>Welcome back, traveler</h2>
+  <p>Manage your tours, track approvals, and complete payments from one place.</p>
+</div>
+
+<div class="stats" id="stats-grid">
+  <div class="stat-card"><div class="icon">🗺️</div><div class="label">My Tours</div><div class="value" id="stat-total">—</div></div>
+  <div class="stat-card"><div class="icon">📝</div><div class="label">Drafts</div><div class="value" id="stat-drafts">—</div></div>
+  <div class="stat-card"><div class="icon">⏳</div><div class="label">In Review</div><div class="value" id="stat-review">—</div></div>
+  <div class="stat-card"><div class="icon">✅</div><div class="label">Approved / Paid</div><div class="value" id="stat-done">—</div></div>
+</div>
+
+<div class="panel">
+  <h3><i class="fa-solid fa-route"></i> My Tours</h3>
+  <div id="tours-table-wrap" class="loading">Loading your tours…</div>
+</div>
+
+<div class="actions">
+  <a href="/" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Create New Tour</a>
+  <a href="/#packages" class="btn btn-secondary"><i class="fa-solid fa-box-open"></i> View Packages</a>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  async function loadRoleData(user) {
+    const res = await TravelAuth.fetchWithAuth('/api/tours/custom-tours/');
+    const tours = res.ok ? await res.json() : [];
+
+    document.getElementById('stat-total').textContent = tours.length;
+    document.getElementById('stat-drafts').textContent = tours.filter(t => t.status === 'draft').length;
+    document.getElementById('stat-review').textContent = tours.filter(t =>
+      ['submitted_logistics', 'pending_finance'].includes(t.status)
+    ).length;
+    document.getElementById('stat-done').textContent = tours.filter(t =>
+      ['approved', 'paid'].includes(t.status)
+    ).length;
+
+    const wrap = document.getElementById('tours-table-wrap');
+    if (!tours.length) {
+      wrap.innerHTML = '<div class="empty">No tours yet. Create your first custom tour to get started.</div>';
+      return;
+    }
+
+    wrap.innerHTML = `
+      <table>
+        <thead><tr><th>Tour</th><th>Dates</th><th>Status</th><th>Total</th></tr></thead>
+        <tbody>
+          ${tours.map(t => `
+            <tr>
+              <td><strong>${t.title}</strong></td>
+              <td>${t.start_date} → ${t.end_date}</td>
+              <td>${statusBadge(t.status)}</td>
+              <td>${formatMoney(t.total_price)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>`;
+  }
+</script>
+{% endblock %}

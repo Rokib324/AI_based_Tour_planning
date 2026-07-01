@@ -387,11 +387,11 @@
       <li><a href="#">Home</a></li>
       <li><a href="#packages">Packages</a></li>
       <li><a href="#">Custom Tour</a></li>
-      <li><a href="#">Dashboard</a></li>
+      <li><a href="/dashboard/">Dashboard</a></li>
       <li><a href="#">About Us</a></li>
       <li><a href="#">Contact</a></li>
     </ul>
-    <a href="/api/users/login/" class="btn-login" id="nav-login-btn">
+    <a href="/auth/login/" class="btn-login" id="nav-login-btn">
       👤 Login / Register
     </a>
   </nav>
@@ -770,6 +770,7 @@
     <div>&copy; 2025 TravelAI. All rights reserved. | AI-Powered Travel Planning</div>
   </footer>
 
+  <script src="/static/js/auth.js"></script>
   <script>
     function scrollToPackages() {
       document.getElementById('packages').scrollIntoView({ behavior: 'smooth' });
@@ -791,6 +792,18 @@
       el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
       observer.observe(el);
     });
+
+    // Update nav when user is logged in
+    (async () => {
+      if (!TravelAuth.getAccessToken()) return;
+      const user = await TravelAuth.fetchProfile();
+      if (!user) return;
+      const btn = document.getElementById('nav-login-btn');
+      if (btn) {
+        btn.href = TravelAuth.dashboardUrlForRole(user.role);
+        btn.textContent = `👤 ${user.username} – Dashboard`;
+      }
+    })();
   </script>
 </body>
 </html>
